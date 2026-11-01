@@ -7,7 +7,6 @@ import {
   CircleNotch,
   ClockCounterClockwise,
   DownloadSimple,
-  Lightning,
   MagnifyingGlass,
   Moon,
   Play,
@@ -15,6 +14,7 @@ import {
   Sun,
   Trash,
   WarningCircle,
+  X,
 } from '@phosphor-icons/react';
 import type { Bootstrap, Model, Run, Sample, Stats, Target } from '../src/types';
 import { DEFAULT_PRESET, PRESETS } from '../src/presets';
@@ -32,6 +32,10 @@ declare global {
     };
   }
 }
+
+const boot = window.__SPEED__ ?? {};
+const token = boot.token;
+const apiUrl = (path: string) => new URL(path.replace(/^\//, ''), document.baseURI).toString();
 
 /** A sandboxed Magpie frame has an opaque origin and no storage; prefs are
  * a convenience there, never a requirement for rendering. */
@@ -51,10 +55,6 @@ const preferences = {
     }
   },
 };
-
-const boot = window.__SPEED__ ?? {};
-const token = boot.token;
-const apiUrl = (path: string) => new URL(path.replace(/^\//, ''), document.baseURI).toString();
 
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
@@ -103,21 +103,22 @@ const tokens = (value?: number | null) =>
 const strings = {
   zh: {
     title: '模型测速',
+    tagline: '首字延迟 · 输出吞吐',
+    selectModels: '选择模型',
     model: '模型',
-    models: '模型与思考深度',
     search: '搜索模型',
     allProviders: '全部提供商',
+    selectHint: '点右侧思考深度会同时选中模型',
+    clear: '清空',
     prompt: 'Prompt',
-    presets: '预制 Prompt',
-    custom: '自定义',
+    presets: '预制',
     system: '系统提示词（可选）',
-    settings: '测量设置',
-    repeats: '重复次数',
+    advanced: '高级选项',
+    repeats: '重复',
     maxTokens: '输出上限',
-    deadline: '单次超时',
+    deadline: '超时',
     start: '开始测速',
     stop: '停止',
-    cancel: '取消',
     refresh: '刷新模型列表',
     targets: '个目标',
     needTargets: '请至少选择一个模型。',
@@ -128,9 +129,8 @@ const strings = {
     cancelled: '已取消',
     interrupted: '已中断',
     results: '测速结果',
-    live: '实时进度',
     history: '测速历史',
-    noHistory: '还没有历史记录',
+    historyEmpty: '还没有测速记录',
     noModels: '没有可用模型',
     gatewayDown: '无法连接 Magpie 网关',
     demo: '示例数据',
@@ -151,33 +151,44 @@ const strings = {
     delete: '删除',
     repeat: '第 {n} 次',
     estimated: 'token 数为本地估算',
-    sampleFailed: '本次失败',
     theme: '切换主题',
     promptChars: '字',
     promptTooLong: 'Prompt 不能超过 20,000 字。',
-    historyHint: '点击历史记录查看之前的结果。',
+    historyHint: '从右上角打开测速历史。',
     modelDefault: '模型默认',
     deleteConfirm: '删除这条测速记录？',
-    sequential: '重复测量顺序执行，避免并发争用影响速度读数。',
+    sequential: '重复测量顺序执行，避免并发争用影响读数。',
     outputDetail: '输出 tokens / 思考 tokens',
+    close: '关闭',
+    viewingHistory: '历史记录',
+    backToLatest: '返回',
+    emptyResults: '选好模型和思考深度后开始测量。',
+    progress: '正在测量 {model} · {done}/{total}',
+    ready: '准备就绪',
+    summary: '{n} 个目标 · 重复 {r} 次',
+    noTargets: '尚未选择模型',
+    historyCount: '条',
+    clearSelection: '清空选择',
+    groupProviders: '提供商',
   },
   en: {
     title: 'Model speed',
+    tagline: 'TTFT · output throughput',
+    selectModels: 'Models',
     model: 'Model',
-    models: 'Models and reasoning effort',
     search: 'Search models',
     allProviders: 'All providers',
+    selectHint: 'Choosing an effort also selects the model',
+    clear: 'Clear',
     prompt: 'Prompt',
     presets: 'Presets',
-    custom: 'Custom',
     system: 'System prompt (optional)',
-    settings: 'Measurement',
+    advanced: 'Advanced',
     repeats: 'Repeats',
     maxTokens: 'Max output',
     deadline: 'Timeout',
     start: 'Run test',
     stop: 'Stop',
-    cancel: 'Cancel',
     refresh: 'Refresh models',
     targets: 'targets',
     needTargets: 'Select at least one model.',
@@ -188,9 +199,8 @@ const strings = {
     cancelled: 'Cancelled',
     interrupted: 'Interrupted',
     results: 'Results',
-    live: 'Live',
     history: 'History',
-    noHistory: 'No measurements yet',
+    historyEmpty: 'No measurements yet',
     noModels: 'No models available',
     gatewayDown: 'Cannot reach the Magpie gateway',
     demo: 'Demo data',
@@ -211,19 +221,31 @@ const strings = {
     delete: 'Delete',
     repeat: 'Run {n}',
     estimated: 'Token counts estimated locally',
-    sampleFailed: 'This repeat failed',
     theme: 'Toggle theme',
     promptChars: 'chars',
     promptTooLong: 'Prompt is limited to 20,000 characters.',
-    historyHint: 'Pick a saved measurement to revisit its numbers.',
+    historyHint: 'Open history from the top right.',
     modelDefault: 'Model default',
     deleteConfirm: 'Delete this measurement?',
     sequential: 'Repeats run sequentially so concurrent quota use cannot skew the numbers.',
     outputDetail: 'Output tokens / reasoning tokens',
+    close: 'Close',
+    viewingHistory: 'History',
+    backToLatest: 'Back',
+    emptyResults: 'Pick models and a reasoning effort, then run a measurement.',
+    progress: 'Measuring {model} · {done}/{total}',
+    ready: 'Ready',
+    summary: '{n} targets · {r} repeats',
+    noTargets: 'No models selected',
+    historyCount: 'saved',
+    clearSelection: 'Clear selection',
+    groupProviders: 'Providers',
   },
 } as const;
 
 type Lang = keyof typeof strings;
+type StringKey = keyof (typeof strings)['zh'];
+const label = (lang: Lang, key: StringKey) => strings[lang][key];
 
 const STATE_KEYS: Record<
   string,
@@ -236,11 +258,10 @@ const STATE_KEYS: Record<
   cancelled: 'cancelled',
   interrupted: 'interrupted',
 };
-const label = (lang: Lang, key: keyof (typeof strings)['zh']) => strings[lang][key];
 
-function sampleRow(lang: Lang, sample: Sample, index: number) {
+function SampleRow({ lang, sample }: { lang: Lang; sample: Sample }) {
   return (
-    <tr key={index}>
+    <tr>
       <td>
         {label(lang, 'repeat').replace('{n}', String(sample.index + 1))}
         {sample.state !== 'done' ? ` · ${sample.state}` : ''}
@@ -256,13 +277,16 @@ function sampleRow(lang: Lang, sample: Sample, index: number) {
   );
 }
 
-function StatsCells({ stats, title }: { stats: Stats; title: string }) {
+function StatsCells({ stats, title, rate }: { stats: Stats; title: string; rate: number }) {
   return (
     <>
       <td className="stat-big">{ms(stats.ttftMs)}</td>
       <td>{ms(stats.firstContentMs)}</td>
       <td>{ms(stats.reasoningMs)}</td>
-      <td className="stat-big">{tps(stats.decodeTps)}</td>
+      <td className="rate-cell">
+        <span className="bar" style={{ width: `${rate}%` }} />
+        <span className="value stat-big">{tps(stats.decodeTps)}</span>
+      </td>
       <td>{tps(stats.wallTps)}</td>
       <td title={title}>
         {tokens(stats.outputTokens)}
@@ -293,11 +317,17 @@ function App() {
   const [repeats, setRepeats] = useState(3);
   const [deadlineSeconds, setDeadline] = useState(120);
   const [run, setRun] = useState<Run | null>(null);
+  const [viewingHistory, setViewingHistory] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, true>>({});
   const [busy, setBusy] = useState(false);
   const controller = useRef<AbortController | null>(null);
 
-  const t = (key: keyof (typeof strings)['zh']) => label(lang, key);
+  const t = (key: StringKey) => label(lang, key);
+  const stateLabel = (state: string) => {
+    const key = STATE_KEYS[state];
+    return key ? t(key) : state;
+  };
 
   const refresh = useCallback(async () => {
     try {
@@ -328,6 +358,17 @@ function App() {
       setLang(theme.lang.startsWith('zh') ? 'zh' : 'en');
     });
   }, []);
+
+  useEffect(() => {
+    if (!historyOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setHistoryOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [historyOpen]);
+
+  useEffect(() => () => controller.current?.abort(), []);
 
   const watch = useCallback(
     async (id: string) => {
@@ -373,8 +414,6 @@ function App() {
     [refresh],
   );
 
-  useEffect(() => () => controller.current?.abort(), []);
-
   const models = data?.models ?? [];
   const providers = useMemo(() => [...new Set(models.map((m) => m.provider))].sort(), [models]);
   const visible = useMemo(() => {
@@ -397,9 +436,13 @@ function App() {
     return [...groups.entries()];
   }, [visible]);
 
-  const selectedModelIds = useMemo(() => new Set(targets.map((target) => target.model)), [targets]);
+  const selected = useMemo(
+    () => new Map(targets.map((target) => [target.model, target.effort])),
+    [targets],
+  );
   const running = !!run && !terminal(run);
   const promptPreset = PRESETS.find((preset) => preset.prompt === prompt)?.id;
+  const historyCount = data?.runs.length ?? 0;
 
   const toggleModel = (model: Model) =>
     setTargets((prev) =>
@@ -408,9 +451,11 @@ function App() {
         : [...prev, { model: model.id, effort: '' }],
     );
 
-  const setEffort = (model: string, effort: string) =>
+  const chooseEffort = (model: Model, effort: string) =>
     setTargets((prev) =>
-      prev.map((target) => (target.model === model ? { ...target, effort } : target)),
+      prev.some((target) => target.model === model.id)
+        ? prev.map((target) => (target.model === model.id ? { ...target, effort } : target))
+        : [...prev, { model: model.id, effort }],
     );
 
   const start = async () => {
@@ -426,20 +471,17 @@ function App() {
     setBusy(true);
     setError('');
     setRun(null);
+    setViewingHistory(false);
     try {
       const created = await api<Run>('api/runs', {
         method: 'POST',
-        body: JSON.stringify({
-          targets,
-          prompt,
-          system,
-          maxTokens,
-          repeats,
-          deadlineSeconds,
-        }),
+        body: JSON.stringify({ targets, prompt, system, maxTokens, repeats, deadlineSeconds }),
       });
       setRun(created);
       void watch(created.id);
+      requestAnimationFrame(() =>
+        document.getElementById('results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -460,7 +502,10 @@ function App() {
     if (!window.confirm(t('deleteConfirm'))) return;
     try {
       await api(`api/runs/${id}`, { method: 'DELETE' });
-      if (run?.id === id) setRun(null);
+      if (run?.id === id) {
+        setRun(null);
+        setViewingHistory(false);
+      }
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -477,88 +522,85 @@ function App() {
     URL.revokeObjectURL(anchor.href);
   };
 
-  const stateLabel = (state: string) => {
-    const key = STATE_KEYS[state];
-    return key ? t(key) : state;
-  };
+  const progress = useMemo(() => {
+    if (!run || !running) return t('ready');
+    const current = run.results.find((result) => result.state === 'running');
+    if (!current) return t('running');
+    const done = current.samples.filter((sample) => sample.state === 'done').length;
+    return t('progress')
+      .replace('{model}', current.target.model.split('/')[1])
+      .replace('{done}', String(done))
+      .replace('{total}', String(current.samples.length));
+  }, [run, running, lang]);
+
+  const maxRate = Math.max(
+    1,
+    ...(run?.results.map((result) => result.stats?.decodeTps ?? 0) ?? [0]),
+  );
 
   return (
-    <div className={`app${data?.runs?.length ? '' : ' no-history'}`}>
-      {data?.runs?.length ? (
-        <aside className="history">
-          <h2>
-            <ClockCounterClockwise size={14} /> {t('history')}
-          </h2>
-          {data.runs.map((item) => (
-            <button
-              key={item.id}
-              className="history-entry"
-              aria-current={run?.id === item.id}
-              onClick={() => {
-                controller.current?.abort();
-                setRun(item);
-              }}
-            >
-              <span className="who">
-                {item.config.targets.map((target) => target.model.split('/')[1]).join(', ')}
-              </span>
-              <span className="sub">
-                {new Date(item.createdAt).toLocaleString()}
-                {item.demo ? ` · ${t('demo')}` : ''}
-              </span>
-              <span className="sub">{stateLabel(item.state)}</span>
-            </button>
-          ))}
-        </aside>
-      ) : null}
-
-      <main className="main">
-        <header className="top">
+    <div className="shell">
+      <header className="topbar">
+        <div className="brand">
           <h1>{t('title')}</h1>
-          {data?.gateway.reachable ? (
-            <span className="pill ok">
-              <CheckCircle size={12} /> {t('connected')}
-            </span>
-          ) : (
-            <span className="pill bad">
-              <WarningCircle size={12} /> {t('offline')}
-            </span>
-          )}
-          {data?.demo ? <span className="pill">{t('demo')}</span> : null}
-          <span className="spacer" />
-          {!embedded ? (
-            <>
-              <button className="icon-button" onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}>
-                {lang === 'zh' ? 'EN' : '中'}
-              </button>
-              <button
-                className="icon-button"
-                title={t('theme')}
-                onClick={() => setDark((value) => !value)}
-              >
-                {dark ? <Sun size={14} /> : <Moon size={14} />}
-              </button>
-            </>
-          ) : null}
-          <button
-            className="icon-button"
-            title={t('refresh')}
-            disabled={running}
-            onClick={() => {
-              void (async () => {
-                try {
-                  await api('api/catalog', { method: 'POST' });
-                  await refresh();
-                } catch (err) {
-                  setError(err instanceof Error ? err.message : String(err));
-                }
-              })();
-            }}
-          >
-            <ArrowClockwise size={14} />
-          </button>
-        </header>
+          <span className="tagline">{t('tagline')}</span>
+        </div>
+        {data?.gateway.reachable ? (
+          <span className="pill ok" title={t('connected')}>
+            <CheckCircle size={12} />
+            <span className="pill-text">{t('connected')}</span>
+          </span>
+        ) : (
+          <span className="pill bad" title={t('offline')}>
+            <WarningCircle size={12} />
+            <span className="pill-text">{t('offline')}</span>
+          </span>
+        )}
+        {data?.demo ? <span className="pill">{t('demo')}</span> : null}
+        <span className="spacer" />
+        <button
+          className="icon-button"
+          aria-expanded={historyOpen}
+          title={t('history')}
+          onClick={() => setHistoryOpen(true)}
+        >
+          <ClockCounterClockwise size={14} />
+          <span className="badge">{historyCount}</span>
+        </button>
+        <button
+          className="icon-button"
+          title={t('refresh')}
+          disabled={running}
+          onClick={() => {
+            void (async () => {
+              try {
+                await api('api/catalog', { method: 'POST' });
+                await refresh();
+              } catch (err) {
+                setError(err instanceof Error ? err.message : String(err));
+              }
+            })();
+          }}
+        >
+          <ArrowClockwise size={14} />
+        </button>
+        {!embedded ? (
+          <>
+            <button className="icon-button" onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}>
+              {lang === 'zh' ? 'EN' : '中'}
+            </button>
+            <button
+              className="icon-button"
+              title={t('theme')}
+              onClick={() => setDark((value) => !value)}
+            >
+              {dark ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
+          </>
+        ) : null}
+      </header>
 
+      <main>
         {data && !data.gateway.reachable ? (
           <p className="error">
             {t('gatewayDown')}: {data.gateway.error}
@@ -566,10 +608,11 @@ function App() {
         ) : null}
         {error ? <p className="error">{error}</p> : null}
 
-        <div className="layout">
-          <section className="card">
-            <h2>{t('models')}</h2>
-            <div className="field-row">
+        <section className="panel">
+          <div className="panel-head">
+            <h2>{t('selectModels')}</h2>
+            <span className="hint">{t('selectHint')}</span>
+            <div className="tools">
               <select value={provider} onChange={(event) => setProvider(event.target.value)}>
                 <option value="">{t('allProviders')}</option>
                 {providers.map((id) => (
@@ -578,7 +621,7 @@ function App() {
                   </option>
                 ))}
               </select>
-              <div className="search" style={{ gridColumn: 'span 2' }}>
+              <div className="search">
                 <MagnifyingGlass size={13} />
                 <input
                   type="search"
@@ -588,70 +631,92 @@ function App() {
                 />
               </div>
             </div>
+          </div>
 
+          <div className="summary-line">
             {targets.length ? (
-              <div className="chips">
-                {targets.map((target) => (
-                  <span key={target.model} className="chip">
-                    {target.model.split('/')[1]}
-                    {target.effort ? ` · ${target.effort}` : ''}
-                    <button
-                      className="remove"
-                      aria-label="remove"
-                      onClick={() =>
-                        setTargets((prev) => prev.filter((row) => row.model !== target.model))
-                      }
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            ) : null}
+              <>
+                <strong>
+                  {t('summary')
+                    .replace('{n}', String(targets.length))
+                    .replace('{r}', String(repeats))}
+                </strong>
+                <span>
+                  {targets
+                    .map((target) => {
+                      const model = models.find((item) => item.id === target.model);
+                      return `${model?.name ?? target.model.split('/')[1]}${
+                        target.effort ? ` · ${target.effort}` : ''
+                      }`;
+                    })
+                    .join('，')}
+                </span>
+                <button className="ghost-button" onClick={() => setTargets([])}>
+                  {t('clearSelection')}
+                </button>
+              </>
+            ) : (
+              <span>{t('noTargets')}</span>
+            )}
+          </div>
 
-            <div className="model-list">
-              {grouped.length ? (
-                grouped.map(([group, rows]) => (
-                  <div key={group}>
-                    <div className="group-label">{group}</div>
-                    {rows.map((model) => (
-                      <div
-                        className={`model-item${selectedModelIds.has(model.id) ? ' on' : ''}`}
-                        key={model.id}
-                      >
+          <div className="model-list">
+            {grouped.length ? (
+              grouped.map(([group, rows]) => (
+                <div key={group}>
+                  <div className="group-label">{group}</div>
+                  {rows.map((model) => {
+                    const effort = selected.get(model.id);
+                    const on = effort !== undefined;
+                    return (
+                      <div className={`model-row${on ? ' on' : ''}`} key={model.id}>
                         <input
                           type="checkbox"
-                          checked={selectedModelIds.has(model.id)}
+                          checked={on}
+                          aria-label={model.name}
                           onChange={() => toggleModel(model)}
                         />
-                        <span className="name" title={`${model.id} · ${model.name}`}>
-                          {model.name}
-                          <span className="provider"> · {model.provider}</span>
-                        </span>
-                        <select
-                          aria-label={t('effort')}
-                          disabled={!selectedModelIds.has(model.id)}
-                          value={targets.find((target) => target.model === model.id)?.effort ?? ''}
-                          onChange={(event) => setEffort(model.id, event.target.value)}
-                        >
-                          <option value="">{t('defaultEffort')}</option>
-                          {model.efforts.map((effort) => (
-                            <option key={effort} value={effort}>
-                              {effort}
-                            </option>
+                        <div className="model-name">
+                          <span className="name" title={model.id}>
+                            {model.name}
+                          </span>
+                          <span className="provider">{model.provider}</span>
+                        </div>
+                        <div className="efforts" role="group" aria-label={t('effort')}>
+                          <button
+                            className="chip"
+                            aria-pressed={on && effort === ''}
+                            onClick={() => chooseEffort(model, '')}
+                          >
+                            {t('defaultEffort')}
+                          </button>
+                          {model.efforts.map((level) => (
+                            <button
+                              key={level}
+                              className="chip"
+                              aria-pressed={on && effort === level}
+                              onClick={() => chooseEffort(model, level)}
+                            >
+                              {level}
+                            </button>
                           ))}
-                        </select>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                ))
-              ) : (
-                <div className="empty">{t('noModels')}</div>
-              )}
-            </div>
+                    );
+                  })}
+                </div>
+              ))
+            ) : (
+              <div className="empty">{t('noModels')}</div>
+            )}
+          </div>
+        </section>
 
+        <section className="panel">
+          <div className="panel-head">
             <h2>{t('prompt')}</h2>
-            <div className="chips">
+            <div className="tools chips">
+              <span className="hint">{t('presets')}</span>
               {PRESETS.map((preset) => (
                 <button
                   key={preset.id}
@@ -664,119 +729,74 @@ function App() {
                 </button>
               ))}
             </div>
+          </div>
+          <textarea
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+            spellCheck={false}
+          />
+          <div className="hint">
+            {prompt.length} {t('promptChars')}
+          </div>
+          <details>
+            <summary>{t('advanced')}</summary>
+            <div className="field-row" style={{ marginTop: 8 }}>
+              <label className="hint" htmlFor="system" style={{ alignSelf: 'center' }}>
+                {t('system')}
+              </label>
+            </div>
             <textarea
-              value={prompt}
-              onChange={(event) => setPrompt(event.target.value)}
-              spellCheck={false}
+              id="system"
+              rows={3}
+              value={system}
+              onChange={(event) => setSystem(event.target.value)}
             />
-            <div className="hint">
-              {prompt.length} {t('promptChars')}
-            </div>
-            <details>
-              <summary className="hint">{t('system')}</summary>
-              <textarea
-                rows={3}
-                value={system}
-                onChange={(event) => setSystem(event.target.value)}
-              />
-            </details>
+          </details>
+        </section>
 
-            <h2>{t('settings')}</h2>
-            <div className="field-row">
-              <div className="field">
-                <label htmlFor="repeats">{t('repeats')}</label>
-                <select
-                  id="repeats"
-                  value={repeats}
-                  onChange={(event) => setRepeats(Number(event.target.value))}
-                >
-                  {[1, 3, 5].map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="maxTokens">{t('maxTokens')}</label>
-                <select
-                  id="maxTokens"
-                  value={maxTokens}
-                  onChange={(event) => setMaxTokens(Number(event.target.value))}
-                >
-                  {[512, 1024, 2048, 4096, 8192].map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="deadline">{t('deadline')}</label>
-                <select
-                  id="deadline"
-                  value={deadlineSeconds}
-                  onChange={(event) => setDeadline(Number(event.target.value))}
-                >
-                  {[30, 60, 120, 300, 600].map((value) => (
-                    <option key={value} value={value}>
-                      {value}s
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="actions">
-              {running ? (
-                <button className="primary" onClick={() => void cancel()}>
-                  <Stop size={14} /> {t('stop')}
-                </button>
-              ) : (
-                <button
-                  className="primary"
-                  disabled={busy || !targets.length}
-                  onClick={() => void start()}
-                >
-                  {busy ? <CircleNotch size={14} className="spin" /> : <Play size={14} />}{' '}
-                  {t('start')}
-                </button>
-              )}
-              <span className="hint">
-                {targets.length} {t('targets')} · {t('repeats')} {repeats}
-              </span>
-            </div>
-          </section>
-
-          <section className="card" style={{ minWidth: 0 }}>
-            <div className="actions">
-              <h2 style={{ margin: 0 }}>{t('results')}</h2>
-              <span className="spacer" />
-              {run ? (
-                <>
-                  <span className="hint">
-                    {new Date(run.createdAt).toLocaleString()} · {stateLabel(run.state)}
-                    {run.demo ? ` · ${t('demo')}` : ''}
-                  </span>
+        <section className="panel" id="results">
+          <div className="panel-head">
+            <h2>{t('results')}</h2>
+            {viewingHistory ? <span className="pill history">{t('viewingHistory')}</span> : null}
+            {run ? (
+              <>
+                <span className="hint">
+                  {new Date(run.createdAt).toLocaleString()} · {stateLabel(run.state)}
+                  {run.demo ? ` · ${t('demo')}` : ''}
+                </span>
+                <div className="tools">
+                  {viewingHistory ? (
+                    <button
+                      className="secondary"
+                      onClick={() => {
+                        setRun(null);
+                        setViewingHistory(false);
+                      }}
+                    >
+                      {t('backToLatest')}
+                    </button>
+                  ) : null}
                   <button className="secondary" onClick={exportRun}>
                     <DownloadSimple size={13} /> {t('export')}
                   </button>
-                  {run.state !== 'running' && run.state !== 'queued' ? (
+                  {!running ? (
                     <button className="secondary" onClick={() => void remove(run.id)}>
                       <Trash size={13} />
                     </button>
                   ) : null}
-                </>
-              ) : (
-                <span className="hint">{t('historyHint')}</span>
-              )}
-            </div>
+                </div>
+              </>
+            ) : (
+              <span className="hint">{t('historyHint')}</span>
+            )}
+          </div>
 
-            {run?.error ? <p className="error">{run.error}</p> : null}
+          {run?.error ? <p className="error">{run.error}</p> : null}
 
-            {run ? (
-              <>
-                <div className="progress">
+          {run ? (
+            <>
+              {running || !run.results.some((result) => result.stats) ? (
+                <div className="targets-live">
                   {run.results.map((result) => {
                     const live = result.samples.find((sample) => sample.state === 'streaming');
                     const shown =
@@ -784,7 +804,7 @@ function App() {
                       [...result.samples].reverse().find((sample) => sample.state === 'done');
                     const done = result.samples.filter((sample) => sample.state === 'done').length;
                     return (
-                      <div className="target-row" key={result.id}>
+                      <div className="target-card" key={result.id}>
                         <div className="title">
                           {result.state === 'running' ? (
                             <CircleNotch size={13} className="spin" />
@@ -795,11 +815,13 @@ function App() {
                           ) : (
                             <CaretRight size={13} />
                           )}
-                          <strong>{result.target.model}</strong>
-                          <span className="pill">{result.target.effort || t('modelDefault')}</span>
+                          <strong>{result.target.model.split('/')[1]}</strong>
+                          <span className="effort">
+                            {result.target.effort || t('modelDefault')}
+                          </span>
                           <span className="spacer" />
                           <span className="hint">
-                            {done}/{result.samples.length} · {stateLabel(result.state)}
+                            {done}/{result.samples.length}
                           </span>
                         </div>
                         {shown ? (
@@ -808,16 +830,10 @@ function App() {
                               {t('ttft')} <b>{ms(shown.ttftMs)}</b>
                             </span>
                             <span>
-                              {t('firstAnswer')} <b>{ms(shown.firstContentMs)}</b>
-                            </span>
-                            <span>
                               {t('outputTps')} <b>{tps(shown.decodeTps)}</b>
                             </span>
                             <span>
                               {t('outputTokens')} <b>{tokens(shown.outputTokens)}</b>
-                            </span>
-                            <span>
-                              {t('total')} <b>{ms(shown.totalMs)}</b>
                             </span>
                           </div>
                         ) : result.error ? (
@@ -827,24 +843,29 @@ function App() {
                     );
                   })}
                 </div>
+              ) : null}
 
-                {run.results.some((result) => result.stats) ? (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>{t('model')}</th>
-                          <th>{t('ttft')}</th>
-                          <th>{t('firstAnswer')}</th>
-                          <th>{t('thinking')}</th>
-                          <th>{t('outputTps')}</th>
-                          <th>{t('wallTps')}</th>
-                          <th>{t('outputTokens')}</th>
-                          <th>{t('total')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {run.results.map((result) => (
+              {run.results.some((result) => result.stats) ? (
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{t('model')}</th>
+                        <th>{t('ttft')}</th>
+                        <th>{t('firstAnswer')}</th>
+                        <th>{t('thinking')}</th>
+                        <th>{t('outputTps')}</th>
+                        <th>{t('wallTps')}</th>
+                        <th>{t('outputTokens')}</th>
+                        <th>{t('total')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {run.results.map((result) => {
+                        const rate = result.stats?.decodeTps
+                          ? Math.max(4, (result.stats.decodeTps / maxRate) * 100)
+                          : 0;
+                        return (
                           <React.Fragment key={result.id}>
                             <tr
                               className="expandable"
@@ -861,13 +882,17 @@ function App() {
                                 <div className="model-name">
                                   {result.target.model.split('/')[1]}
                                 </div>
-                                <div className="model-provider">
+                                <div className="model-sub">
                                   {result.target.model.split('/')[0]} ·{' '}
                                   {result.target.effort || t('modelDefault')}
                                 </div>
                               </td>
                               {result.stats ? (
-                                <StatsCells stats={result.stats} title={t('outputDetail')} />
+                                <StatsCells
+                                  stats={result.stats}
+                                  title={t('outputDetail')}
+                                  rate={rate}
+                                />
                               ) : (
                                 <td colSpan={7} className="muted">
                                   {result.error || stateLabel(result.state)}
@@ -880,7 +905,7 @@ function App() {
                                   <table className="detail-table">
                                     <thead>
                                       <tr>
-                                        <th></th>
+                                        <th />
                                         <th>{t('ttft')}</th>
                                         <th>{t('firstAnswer')}</th>
                                         <th>{t('thinking')}</th>
@@ -890,9 +915,9 @@ function App() {
                                       </tr>
                                     </thead>
                                     <tbody>
-                                      {result.samples.map((sample, index) =>
-                                        sampleRow(lang, sample, index),
-                                      )}
+                                      {result.samples.map((sample) => (
+                                        <SampleRow key={sample.index} lang={lang} sample={sample} />
+                                      ))}
                                     </tbody>
                                   </table>
                                   {result.samples.some((sample) => sample.estimated) ? (
@@ -902,27 +927,158 @@ function App() {
                               </tr>
                             ) : null}
                           </React.Fragment>
-                        ))}
-                      </tbody>
-                    </table>
-                    <p className="footer-note">
-                      {t('median')} · {run.config.repeats} {t('repeats')} ×{' '}
-                      {run.config.targets.length} {t('targets')}. {t('sequential')}
-                    </p>
-                  </div>
-                ) : null}
-              </>
-            ) : (
-              <div className="empty">
-                <Lightning size={18} />
-                <div>
-                  {lang === 'zh' ? '选择模型后开始测量。' : 'Pick models and start a measurement.'}
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  <p className="footer-note">
+                    {t('median')} · {run.config.repeats} {t('repeats')} ×{' '}
+                    {run.config.targets.length} {t('targets')}. {t('sequential')}
+                  </p>
                 </div>
-              </div>
-            )}
-          </section>
-        </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="empty">{t('emptyResults')}</div>
+          )}
+        </section>
       </main>
+
+      <div className="runbar">
+        <div className="runbar-inner">
+          <div className="who">
+            <strong>
+              {targets.length
+                ? t('summary')
+                    .replace('{n}', String(targets.length))
+                    .replace('{r}', String(repeats))
+                : t('noTargets')}
+            </strong>
+            <span>{progress}</span>
+          </div>
+          <div className="controls">
+            <div className="seg" role="group" aria-label={t('repeats')}>
+              {[1, 3, 5].map((value) => (
+                <button
+                  key={value}
+                  aria-pressed={repeats === value}
+                  onClick={() => setRepeats(value)}
+                  disabled={running}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+            <select
+              aria-label={t('maxTokens')}
+              value={maxTokens}
+              disabled={running}
+              onChange={(event) => setMaxTokens(Number(event.target.value))}
+            >
+              {[512, 1024, 2048, 4096, 8192].map((value) => (
+                <option key={value} value={value}>
+                  {value} tok
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label={t('deadline')}
+              value={deadlineSeconds}
+              disabled={running}
+              onChange={(event) => setDeadline(Number(event.target.value))}
+            >
+              {[30, 60, 120, 300, 600].map((value) => (
+                <option key={value} value={value}>
+                  {value}s
+                </option>
+              ))}
+            </select>
+            {running ? (
+              <button className="primary stop" onClick={() => void cancel()}>
+                <Stop size={14} /> {t('stop')}
+              </button>
+            ) : (
+              <button
+                className="primary"
+                disabled={busy || !targets.length}
+                onClick={() => void start()}
+              >
+                {busy ? <CircleNotch size={14} className="spin" /> : <Play size={14} />}{' '}
+                {t('start')}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {historyOpen ? (
+        <div className="backdrop" onMouseDown={() => setHistoryOpen(false)}>
+          <aside
+            className="drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('history')}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header>
+              <h2>{t('history')}</h2>
+              <span className="pill">
+                {historyCount} {t('historyCount')}
+              </span>
+              <span className="spacer" />
+              <button
+                className="icon-button"
+                autoFocus
+                aria-label={t('close')}
+                onClick={() => setHistoryOpen(false)}
+              >
+                <X size={14} />
+              </button>
+            </header>
+            <div className="list">
+              {data?.runs.length ? (
+                data.runs.map((item) => (
+                  <div key={item.id} className="history-entry" aria-current={run?.id === item.id}>
+                    <button
+                      className="body"
+                      onClick={() => {
+                        controller.current?.abort();
+                        setRun(item);
+                        setViewingHistory(true);
+                        setHistoryOpen(false);
+                      }}
+                    >
+                      <span className="who">
+                        {item.config.targets
+                          .map(
+                            (target) =>
+                              `${target.model.split('/')[1]}${target.effort ? ` · ${target.effort}` : ''}`,
+                          )
+                          .join(', ')}
+                      </span>
+                      <span className="sub">
+                        {new Date(item.createdAt).toLocaleString()}
+                        <span>·</span>
+                        <span>{stateLabel(item.state)}</span>
+                        {item.demo ? <span>· {t('demo')}</span> : null}
+                      </span>
+                    </button>
+                    <button
+                      className="delete"
+                      aria-label={t('delete')}
+                      onClick={() => void remove(item.id)}
+                    >
+                      <Trash size={13} />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="empty">{t('historyEmpty')}</div>
+              )}
+            </div>
+          </aside>
+        </div>
+      ) : null}
     </div>
   );
 }
