@@ -316,8 +316,10 @@ function App() {
   const [maxTokens, setMaxTokens] = useState(2048);
   const [repeats, setRepeats] = useState(3);
   const [deadlineSeconds, setDeadline] = useState(120);
-  const [run, setRun] = useState<Run | null>(null);
-  const [viewingHistory, setViewingHistory] = useState(false);
+  // The live measurement and the record being read are separate: browsing
+  // history must never hide a running task or its cancel button.
+  const [activeRun, setActiveRun] = useState<Run | null>(null);
+  const [historyRun, setHistoryRun] = useState<Run | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, true>>({});
   const [busy, setBusy] = useState(false);
@@ -399,7 +401,7 @@ function App() {
             if (payload) {
               const next = asRun(JSON.parse(payload));
               if (next) {
-                setRun(next);
+                setActiveRun(next);
                 if (terminal(next)) void refresh();
               }
             }
@@ -440,7 +442,9 @@ function App() {
     () => new Map(targets.map((target) => [target.model, target.effort])),
     [targets],
   );
-  const running = !!run && !terminal(run);
+  const run = historyRun ?? activeRun;
+  const viewingHistory = historyRun !== null;
+  const running = !!activeRun && !terminal(activeRun);
   const promptPreset = PRESETS.find((preset) => preset.prompt === prompt)?.id;
   const historyCount = data?.runs.length ?? 0;
 
@@ -470,14 +474,15 @@ function App() {
     }
     setBusy(true);
     setError('');
-    setRun(null);
-    setViewingHistory(false);
+    setActiveRun(null);
+    setHistoryRun(null);
+    setExpanded({});
     try {
       const created = await api<Run>('api/runs', {
         method: 'POST',
         body: JSON.stringify({ targets, prompt, system, maxTokens, repeats, deadlineSeconds }),
       });
-      setRun(created);
+      setActiveRun(created);
       void watch(created.id);
       requestAnimationFrame(() =>
         document.getElementById('results')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
@@ -490,9 +495,9 @@ function App() {
   };
 
   const cancel = async () => {
-    if (!run) return;
+    if (!activeRun) return;
     try {
-      await api(`api/runs/${run.id}/cancel`, { method: 'POST' });
+      await api(`api/runs/${activeRun.id}/cancel`, { method: 'POST' });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -502,10 +507,8 @@ function App() {
     if (!window.confirm(t('deleteConfirm'))) return;
     try {
       await api(`api/runs/${id}`, { method: 'DELETE' });
-      if (run?.id === id) {
-        setRun(null);
-        setViewingHistory(false);
-      }
+      if (historyRun?.id === id) setHistoryRun(null);
+      if (activeRun?.id === id) setActiveRun(null);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -523,8 +526,8 @@ function App() {
   };
 
   const progress = useMemo(() => {
-    if (!run || !running) return t('ready');
-    const current = run.results.find((result) => result.state === 'running');
+    if (!activeRun || !running) return t('ready');
+    const current = activeRun.results.find((result) => result.state === 'running');
     if (!current) return t('running');
     const done = current.samples.filter((sample) => sample.state === 'done').length;
     return t('progress')
@@ -769,8 +772,8 @@ function App() {
                     <button
                       className="secondary"
                       onClick={() => {
-                        setRun(null);
-                        setViewingHistory(false);
+                        setHistoryRun(null);
+                        setExpanded({});
                       }}
                     >
                       {t('backToLatest')}
@@ -779,7 +782,7 @@ function App() {
                   <button className="secondary" onClick={exportRun}>
                     <DownloadSimple size={13} /> {t('export')}
                   </button>
-                  {!running ? (
+                  {run.state !== 'running' && run.state !== 'queued' ? (
                     <button className="secondary" onClick={() => void remove(run.id)}>
                       <Trash size={13} />
                     </button>
@@ -1042,9 +1045,10 @@ function App() {
                     <button
                       className="body"
                       onClick={() => {
-                        controller.current?.abort();
-                        setRun(item);
-                        setViewingHistory(true);
+                        // The entry that is still measuring belongs to the live
+                        // view; a frozen snapshot would stop following it.
+                        setHistoryRun(activeRun?.id === item.id ? null : item);
+                        setExpanded({});
                         setHistoryOpen(false);
                       }}
                     >
@@ -1063,13 +1067,15 @@ function App() {
                         {item.demo ? <span>· {t('demo')}</span> : null}
                       </span>
                     </button>
-                    <button
-                      className="delete"
-                      aria-label={t('delete')}
-                      onClick={() => void remove(item.id)}
-                    >
-                      <Trash size={13} />
-                    </button>
+                    {item.state !== 'running' && item.state !== 'queued' ? (
+                      <button
+                        className="delete"
+                        aria-label={t('delete')}
+                        onClick={() => void remove(item.id)}
+                      >
+                        <Trash size={13} />
+                      </button>
+                    ) : null}
                   </div>
                 ))
               ) : (
