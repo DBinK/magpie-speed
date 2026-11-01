@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Speed</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-content: center;
+        font:
+          14px/1.7 -apple-system,
+          BlinkMacSystemFont,
+          system-ui,
+          sans-serif;
+        background: var(--magpie-bg, Canvas);
+        color: var(--magpie-fg, CanvasText);
+      }
+      main {
+        max-width: 440px;
+        padding: 32px;
+      }
+      p {
+        color: var(--magpie-muted, GrayText);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <strong>Speed</strong>
+      <p id="status">正在连接测速服务…</p>
+    </main>
+    <script src="_magpie/bridge.js"></script>
+    <script src="boot.js"></script>
+  </body>
+</html>
