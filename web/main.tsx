@@ -16,6 +16,7 @@ import {
   WarningCircle,
   X,
 } from '@phosphor-icons/react';
+import { EFFORT_OFF } from '../src/types';
 import type { Bootstrap, Model, Run, Sample, Stats, Target } from '../src/types';
 import { DEFAULT_PRESET, PRESETS } from '../src/presets';
 import { embedded, subscribeTheme } from './magpie';
@@ -246,6 +247,22 @@ const strings = {
 type Lang = keyof typeof strings;
 type StringKey = keyof (typeof strings)['zh'];
 const label = (lang: Lang, key: StringKey) => strings[lang][key];
+
+/** A reasoning level as the page names it: the English level itself, and the
+ * off switch as "None". */
+const EFFORT_NAMES: Record<string, string> = {
+  none: 'None',
+  minimal: 'Minimal',
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  xhigh: 'Extra high',
+  max: 'Max',
+  ultra: 'Ultra',
+};
+
+const effortName = (level: string) =>
+  EFFORT_NAMES[level.toLowerCase()] ?? level.charAt(0).toUpperCase() + level.slice(1);
 
 const STATE_KEYS: Record<
   string,
@@ -531,7 +548,7 @@ function App() {
     if (!current) return t('running');
     const done = current.samples.filter((sample) => sample.state === 'done').length;
     return t('progress')
-      .replace('{model}', current.target.model.split('/')[1])
+      .replace('{model}', current.target.model)
       .replace('{done}', String(done))
       .replace('{total}', String(current.samples.length));
   }, [run, running, lang]);
@@ -547,6 +564,7 @@ function App() {
         <div className="brand">
           <h1>{t('title')}</h1>
           <span className="tagline">{t('tagline')}</span>
+          {data?.version ? <span className="version">v{data.version}</span> : null}
         </div>
         {data?.gateway.reachable ? (
           <span className="pill ok" title={t('connected')}>
@@ -647,9 +665,8 @@ function App() {
                 <span>
                   {targets
                     .map((target) => {
-                      const model = models.find((item) => item.id === target.model);
-                      return `${model?.name ?? target.model.split('/')[1]}${
-                        target.effort ? ` · ${target.effort}` : ''
+                      return `${target.model}${
+                        target.effort ? ` · ${effortName(target.effort)}` : ''
                       }`;
                     })
                     .join('，')}
@@ -676,14 +693,13 @@ function App() {
                         <input
                           type="checkbox"
                           checked={on}
-                          aria-label={model.name}
+                          aria-label={model.id}
                           onChange={() => toggleModel(model)}
                         />
                         <div className="model-name">
                           <span className="name" title={model.id}>
-                            {model.name}
+                            {model.id}
                           </span>
-                          <span className="provider">{model.provider}</span>
                         </div>
                         <div className="efforts" role="group" aria-label={t('effort')}>
                           <button
@@ -693,14 +709,17 @@ function App() {
                           >
                             {t('defaultEffort')}
                           </button>
-                          {model.efforts.map((level) => (
+                          {(model.efforts.length && !model.efforts.includes(EFFORT_OFF)
+                            ? [EFFORT_OFF, ...model.efforts]
+                            : model.efforts
+                          ).map((level) => (
                             <button
                               key={level}
-                              className="chip"
+                              className={level === EFFORT_OFF ? 'chip off' : 'chip'}
                               aria-pressed={on && effort === level}
                               onClick={() => chooseEffort(model, level)}
                             >
-                              {level}
+                              {effortName(level)}
                             </button>
                           ))}
                         </div>
@@ -818,9 +837,11 @@ function App() {
                           ) : (
                             <CaretRight size={13} />
                           )}
-                          <strong>{result.target.model.split('/')[1]}</strong>
+                          <strong>{result.target.model}</strong>
                           <span className="effort">
-                            {result.target.effort || t('modelDefault')}
+                            {result.target.effort
+                              ? effortName(result.target.effort)
+                              : t('modelDefault')}
                           </span>
                           <span className="spacer" />
                           <span className="hint">
@@ -882,12 +903,11 @@ function App() {
                               }
                             >
                               <td>
-                                <div className="model-name">
-                                  {result.target.model.split('/')[1]}
-                                </div>
+                                <div className="model-name">{result.target.model}</div>
                                 <div className="model-sub">
-                                  {result.target.model.split('/')[0]} ·{' '}
-                                  {result.target.effort || t('modelDefault')}
+                                  {result.target.effort
+                                    ? effortName(result.target.effort)
+                                    : t('modelDefault')}
                                 </div>
                               </td>
                               {result.stats ? (
@@ -1056,7 +1076,7 @@ function App() {
                         {item.config.targets
                           .map(
                             (target) =>
-                              `${target.model.split('/')[1]}${target.effort ? ` · ${target.effort}` : ''}`,
+                              `${target.model}${target.effort ? ` · ${effortName(target.effort)}` : ''}`,
                           )
                           .join(', ')}
                       </span>

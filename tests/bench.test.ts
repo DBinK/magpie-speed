@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { Gateway } from '../src/gateway';
 import { measure, summarize } from '../src/bench';
+import { EFFORT_OFF } from '../src/types';
 import type { RunConfig, Sample } from '../src/types';
 
 let server: ReturnType<typeof Bun.serve>;
 let gateway: Gateway;
 let withUsage = true;
+let sentEfforts: (string | undefined)[] = [];
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -29,6 +31,7 @@ beforeAll(() => {
         });
       if (url.pathname !== '/v1/chat/completions') return new Response('no', { status: 404 });
       const body = (await req.json()) as { model: string; reasoning_effort?: string };
+      sentEfforts.push(body.reasoning_effort);
       // Failure shapes the page must never record as a valid measurement.
       if (body.model === 'acme/errorpage')
         return Response.json({ error: { message: 'upstream exploded' } }, { status: 200 });
@@ -122,6 +125,18 @@ test('measures first token, answer start and usage tokens', async () => {
   expect(sample.estimated).toBe(false);
   expect(sample.decodeTps!).toBeGreaterThan(0);
   expect(sample.wallTps!).toBeGreaterThan(0);
+});
+
+test('asks for reasoning off where the target says none', async () => {
+  sentEfforts = [];
+  await measure({
+    gateway,
+    config,
+    target: { model: 'acme/fast', effort: EFFORT_OFF },
+    index: 0,
+    signal: new AbortController().signal,
+  });
+  expect(sentEfforts).toEqual([EFFORT_OFF]);
 });
 
 test('falls back to streamed chunk counts when usage is absent', async () => {

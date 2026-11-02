@@ -5,11 +5,17 @@ export interface Model {
   efforts: string[];
 }
 
-/** One model at one reasoning effort. An empty effort means "provider default". */
+/** One model at one reasoning effort. An empty effort means "provider default";
+ * "none" turns reasoning off, and is sent as such. */
 export interface Target {
   model: string;
   effort: string;
 }
+
+/** The effort value that asks a model to stop reasoning. Magpie reads
+ * `reasoning_effort: "none"` as thinking off, falling back to the model's
+ * lowest level where it cannot stop. */
+export const EFFORT_OFF = 'none';
 
 export interface RunConfig {
   targets: Target[];

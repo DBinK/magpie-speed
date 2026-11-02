@@ -1,6 +1,7 @@
 import { mkdir, readdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { count, list, object, text } from './json';
+import { EFFORT_OFF } from './types';
 import type { Run, RunConfig, Sample, Stats, Target, TargetResult } from './types';
 
 const LIMIT = 100;
@@ -249,7 +250,8 @@ export function validateConfig(
     const effort = text(row.effort) ?? '';
     const match = models.find((m) => m.id === model);
     if (!match) throw new Error(`Unknown model: ${model || '(empty)'}`);
-    if (effort && !match.efforts.includes(effort))
+    // "none" is the off switch rather than a catalogued level, so any model takes it.
+    if (effort && effort !== EFFORT_OFF && !match.efforts.includes(effort))
       throw new Error(`${model} does not offer reasoning effort "${effort}".`);
     const key = `${model}|${effort}`;
     if (seen.has(key)) throw new Error(`${model} was selected twice with the same effort.`);

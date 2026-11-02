@@ -1,9 +1,14 @@
 import { startServer } from './server';
+import { VERSION } from './version';
 
 const argv = process.argv.slice(2);
+if (argv.includes('--version')) {
+  console.log(VERSION);
+  process.exit(0);
+}
 if (argv.includes('--help')) {
   console.log(
-    'Magpie Speed\n  bun start [--demo] [--port 3489]\nEnvironment: MAGPIE_SPEED_GATEWAY, MAGPIE_SPEED_API_KEY, MAGPIE_SPEED_DATA_DIR',
+    `Magpie Speed ${VERSION}\n  bun start [--demo] [--port 3489] [--version]\nEnvironment: MAGPIE_SPEED_GATEWAY, MAGPIE_SPEED_API_KEY, MAGPIE_SPEED_DATA_DIR`,
   );
   process.exit(0);
 }

@@ -4,7 +4,7 @@
 
 ![测速界面，图中为明确标识的示例数据](docs/preview.png)
 
-- 从 `/v1/models` 读取当前启用的模型与 `reasoning_levels`，按提供商分组；思考深度在每行右侧平铺直选，点选即同时选中该模型，可多选对比。
+- 从 `/v1/models` 读取当前启用的模型与 `reasoning_levels`，按提供商分组，按模型 ID 列出；思考深度在每行右侧平铺直选，点选即同时选中该模型，可多选对比。每行还有 `None`，向网关发 `reasoning_effort: "none"`，可对比同一模型开关思考的差别。
 - 流式计时，记录首字延迟（TTFT）、首答时间、思考耗时、输出 tokens/s、整体 tokens/s、token 数与总耗时；输出速度带横向条形便于对比。
 - 每个目标重复 1/3/5 次取中位数；同一时间只跑一条流，避免并发争用额度扭曲读数。
 - 预制 Prompt（短文 / 代码 / 推理）可一键切换，也可自由编辑；自定义 Prompt 保存在本地。
@@ -50,6 +50,8 @@ bun start
 - `MAGPIE_SPEED_DATA_DIR`（默认 `~/.config/magpie/speed`）
 
 `bun start --demo` 提供独立示例模式，不调用真实网关或模型。
+
+版本号只写在 `package.json` 的 `version`。构建时（`src/version.ts`）读入并打进产物，页面顶栏、`/_speed/health`、`/api/bootstrap` 与 `bun start --version` 都取自这一处；发版只需要改 `package.json` 并重新构建。
 
 ## 测量说明
 

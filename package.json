@@ -27,6 +27,7 @@
     "prepack": "bun run build"
   },
   "magpie": {
+    "icon": "https://raw.githubusercontent.com/DBinK/magpie-speed/main/docs/icon.svg",
     "page": {
       "title": "Speed",
       "titles": {
