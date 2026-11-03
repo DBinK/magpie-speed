@@ -34,6 +34,7 @@
         "zh": "模型测速"
       },
       "file": "page/index.html",
+      "icon": "page/icon.svg",
       "service": {
         "port": 3489,
         "option": "port"
