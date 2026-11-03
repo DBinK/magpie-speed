@@ -8,7 +8,7 @@ if (argv.includes('--version')) {
 }
 if (argv.includes('--help')) {
   console.log(
-    `Magpie Speed ${VERSION}\n  bun start [--demo] [--port 3489] [--version]\nEnvironment: MAGPIE_SPEED_GATEWAY, MAGPIE_SPEED_API_KEY, MAGPIE_SPEED_DATA_DIR`,
+    `Magpie Speed ${VERSION}\n  bun start [--demo] [--port 45890] [--version]\nEnvironment: MAGPIE_SPEED_GATEWAY, MAGPIE_SPEED_API_KEY, MAGPIE_SPEED_DATA_DIR`,
   );
   process.exit(0);
 }

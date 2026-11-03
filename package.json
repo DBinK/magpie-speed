@@ -4,8 +4,9 @@
   "description": "Model speed measurements for Magpie: time to first token and output throughput per model and reasoning effort",
   "type": "module",
   "license": "MIT",
-  "main": "dist/plugin.js",
   "files": [
+    "index.mjs",
+    "hooks.mjs",
     "dist",
     "page",
     "docs",
@@ -27,6 +28,7 @@
     "prepack": "bun run build"
   },
   "magpie": {
+    "hooks": "./hooks.mjs",
     "icon": "https://raw.githubusercontent.com/DBinK/magpie-speed/main/docs/icon.svg",
     "page": {
       "title": "Speed",
@@ -36,7 +38,7 @@
       "file": "page/index.html",
       "icon": "page/icon.svg",
       "service": {
-        "port": 3489,
+        "port": 45890,
         "option": "port"
       }
     },
@@ -51,7 +53,7 @@
       }
     ],
     "options": {
-      "port": 3489
+      "port": 45890
     }
   },
   "dependencies": {

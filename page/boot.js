@@ -1,7 +1,7 @@
 (async () => {
   const theme = await window.magpie?.ready;
   const config = (await window.magpie?.options?.get?.()) || {};
-  const port = Number(config.port || 3489);
+  const port = Number(config.port || 45890);
   if (!Number.isInteger(port) || port < 1 || port > 65535)
     throw new Error('Invalid Speed service port.');
   let service = window.magpie?.service;

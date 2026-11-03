@@ -31,7 +31,7 @@ export function options(
     throw new Error(
       'Gateway must be an HTTP(S) origin without credentials, path, query or fragment.',
     );
-  const port = input.port ?? Number(process.env.MAGPIE_SPEED_PORT || 3489);
+  const port = input.port ?? Number(process.env.MAGPIE_SPEED_PORT || 45890);
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('Invalid service port.');
   return {
     port,

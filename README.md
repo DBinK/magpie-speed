@@ -42,7 +42,7 @@ bun run check
 bun start
 ```
 
-页面服务默认监听 `3489`，网关默认 `http://127.0.0.1:3425`。可用环境变量覆盖：
+页面服务默认监听 `45890`，网关默认 `http://127.0.0.1:3425`。可用环境变量覆盖：
 
 - `MAGPIE_SPEED_GATEWAY`（或 `MAGPIE_ADDR`）
 - `MAGPIE_SPEED_API_KEY`（仅远程共享网关需要）
