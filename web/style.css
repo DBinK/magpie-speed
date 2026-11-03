@@ -324,10 +324,18 @@ textarea {
 .model-list {
   border: 1px solid var(--line);
   border-radius: 10px;
-  overflow: hidden;
+  /* A long catalog scrolls here instead of stretching the page: the prompt,
+     the results and the run bar stay within one screen. */
+  max-height: clamp(200px, 50vh, 480px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 .group-label {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   padding: 5px 12px;
   font-size: 10.5px;
   color: var(--muted);
